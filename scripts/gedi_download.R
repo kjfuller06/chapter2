@@ -7,10 +7,10 @@ library(leaflet)
 library(leafsync)
 
 # Study area boundary box coordinates
-xmax = 150.8
-ymax = -33.575
-xmin = 150.7
-ymin = -33.625
+xmax = 150.73487
+ymax = -33.61501
+xmin = 150.74169
+ymin = -33.62048
 
 # Specifying the date range
 daterange=c("2019-01-01","2021-01-01")
@@ -25,8 +25,8 @@ outdir="data/gedi/richmond"
 
 # Downloading GEDI data
 gediDownload(filepath=gLevel1B,outdir=outdir) # geolocated waveforms
-# gediDownload(filepath=gLevel2A,outdir=outdir) # elevation and height metrics
-# gediDownload(filepath=gLevel2B,outdir=outdir) # canopy cover and vertical profile metrics
+gediDownload(filepath=gLevel2A,outdir=outdir) # elevation and height metrics
+gediDownload(filepath=gLevel2B,outdir=outdir) # canopy cover and vertical profile metrics
 
 # Reading GEDI data
 files <- list.files(outdir, full.names = TRUE)
