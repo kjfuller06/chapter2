@@ -1,3 +1,5 @@
+# Study area is too large. Vignette works great for smaller area. Can't get fig8.png to work with my data either
+
 library(rGEDI)
 library(tidyverse)
 library(raster)
@@ -24,8 +26,8 @@ gLevel2B<-gedifinder(product="GEDI02_B", xmax, ymax, xmin, ymin, version="001",d
 outdir="data/gedi/richmond"
 
 # Downloading GEDI data
-gediDownload(filepath=gLevel1B,outdir=outdir) # geolocated waveforms
-gediDownload(filepath=gLevel2A,outdir=outdir) # elevation and height metrics
+# gediDownload(filepath=gLevel1B,outdir=outdir) # geolocated waveforms
+# gediDownload(filepath=gLevel2A,outdir=outdir) # elevation and height metrics
 gediDownload(filepath=gLevel2B,outdir=outdir) # canopy cover and vertical profile metrics
 
 # Reading GEDI data
@@ -44,7 +46,7 @@ level1bGeo_spdf<-SpatialPointsDataFrame(cbind(level1bGeo$longitude_bin0, level1b
 
 # Exporting level1bGeo as ESRI Shapefile
 raster::shapefile(level1bGeo_spdf, substr(files[1], 1, nchar(files[1])-3))
-level1bGeo_spdf = st_read(paste0(substr(files[1], 1, nchar(files[1])-3), ".shp"))
+# level1bGeo_spdf = st_read(paste0(substr(files[1], 1, nchar(files[1])-3), ".shp"))
 
 # mapping gedi data
 # leaflet() %>%
@@ -58,7 +60,7 @@ level1bGeo_spdf = st_read(paste0(substr(files[1], 1, nchar(files[1])-3), ".shp")
 #   addLegend(colors = "red", labels= "Samples",title ="GEDI Level1B")
 
 # Extracting GEDI full-waveform for a giving shotnumber
-wf <- getLevel1BWF(gedilevel1b, shot_number="42170024000000001")
+wf <- getLevel1BWF(gedilevel1b, shot_number="42170010100001501")
 
 par(mfrow = c(2,1), mar=c(4,4,1,1), cex.axis = 1.5)
 
@@ -68,3 +70,32 @@ grid()
 plot(wf, relative=TRUE, polygon=FALSE, type="l", lwd=2, col="forestgreen",
      xlab="Waveform Amplitude (%)", ylab="Elevation (m)")
 grid()
+
+# Get GEDI Elevation and Height Metrics
+gedilevel2a<-readLevel2A(level2Apath = "data/gedi/richmond/GEDI02_A_2019253111453_O04217_T02086_02_001_01.h5")
+level2AM<-getLevel2AM(gedilevel2a)
+head(level2AM[,c("beam","shot_number","elev_highestreturn","elev_lowestmode","rh100")])
+
+# Converting shot_number as "integer64" to "character"
+level2AM$shot_number<-paste0(level2AM$shot_number)
+
+# selecting only shot numbers with positive vegetation height data
+level2AM = level2AM[level2AM$rh90 > 0,]
+
+# Converting Elevation and Height Metrics as data.table to SpatialPointsDataFrame
+level2AM_spdf<-SpatialPointsDataFrame(cbind(level2AM$lon_lowestmode,level2AM$lat_lowestmode),
+                                      data=level2AM)
+
+# Exporting Elevation and Height Metrics as ESRI Shapefile
+raster::shapefile(level2AM_spdf,"data/gedi/richmond/GEDI02_A_2019253111453_O04217_T02086_02_001_01_sub")
+
+shot_number = "42170010100001501"
+
+png("fig8.png", width = 8, height = 6, units = 'in', res = 300)
+plotWFMetrics(gedilevel1b, gedilevel2a, shot_number, rh=c(25, 50, 75, 90), xlim = c(0,1000))
+dev.off()
+
+# get GEDI vegetation biophyisical variables (GEDI Level2B)
+gedilevel2b<-readLevel2B(level2Bpath = "data/gedi/richmond/GEDI02_B_2019253111453_O04217_T02086_02_001_01.h5")
+level2BVPM<-getLevel2BVPM(gedilevel2b)
+head(level2BVPM[,c("beam","shot_number","pai","fhd_normal","omega","pgap_theta","cover")])
